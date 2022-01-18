@@ -1,3 +1,10 @@
+.idea/*
+.DS_Store
+.env
+data/*
+utils/mysql_conn.py
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
