@@ -2,6 +2,13 @@
 from matplotlib.patches import Circle, Rectangle, Arc
 import matplotlib.pyplot as plt
 
+def format_four_factors(value, metric):
+    if metric in ['TOV', 'REB%']:
+        return f"{value * 100:.1f}%"
+    else:
+        return f"{value:.3}"
+
+
 def draw_court(ax=None, color='black', lw=2, outer_lines=False):
     # If an axes object isn't provided to plot onto, just get current one
     if ax is None:
