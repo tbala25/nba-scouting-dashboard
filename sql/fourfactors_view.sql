@@ -28,3 +28,34 @@ sum(opp_fta)/sum(opp_fga) as def_ftr
 from sr_nba.team_boxscore a 
 join sr_nba.opp_team_boxscore b on a.team = b.team
 group by a.team;
+
+drop view if exists sr_nba.team_four_factors_rank;
+create view team_four_factors_rank as
+select `sr_nba`.`team_four_factors`.`team`     AS `team`,
+       `sr_nba`.`team_four_factors`.`off_efg%` AS `off_efg%`,
+       `sr_nba`.`team_four_factors`.`off_TOV`  AS `off_TOV`,
+       `sr_nba`.`team_four_factors`.`off_reb%` AS `off_reb%`,
+       `sr_nba`.`team_four_factors`.`off_ftr`  AS `off_ftr`,
+       `sr_nba`.`team_four_factors`.`def_efg%` AS `def_efg%`,
+       `sr_nba`.`team_four_factors`.`def_TOV`  AS `def_TOV`,
+       `sr_nba`.`team_four_factors`.`def_reb%` AS `def_reb%`,
+       `sr_nba`.`team_four_factors`.`def_ftr`  AS `def_ftr`,
+       row_number() OVER `oe`                  AS `off_efg_rank`,
+       row_number() OVER `ot`                  AS `off_tov_rank`,
+       row_number() OVER `ore`                 AS `off_reb_rank`,
+       row_number() OVER `oft`                 AS `off_ftr_rank`,
+       row_number() OVER `de`                  AS `def_efg_rank`,
+       row_number() OVER `dt`                  AS `def_tov_rank`,
+       row_number() OVER `dre`                 AS `def_reb_rank`,
+       row_number() OVER `dft`                 AS `def_ftr_rank`
+from `sr_nba`.`team_four_factors`
+    window
+    `oe` AS (ORDER BY `sr_nba`.`team_four_factors`.`off_efg%` desc),
+    `ot` AS (ORDER BY `sr_nba`.`team_four_factors`.`off_TOV` asc),
+    `ore` AS (ORDER BY `sr_nba`.`team_four_factors`.`off_reb%` desc),
+    `oft` AS (ORDER BY `sr_nba`.`team_four_factors`.`off_ftr` desc),
+    `de` AS (ORDER BY `sr_nba`.`team_four_factors`.`def_efg%` asc),
+    `dt` AS (ORDER BY `sr_nba`.`team_four_factors`.`def_TOV` desc),
+    `dre` AS (ORDER BY `sr_nba`.`team_four_factors`.`def_reb%` desc),
+    `dft` AS (ORDER BY `sr_nba`.`team_four_factors`.`def_ftr` asc);
+

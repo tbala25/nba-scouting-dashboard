@@ -1,12 +1,39 @@
-##DRAW COURT
 from matplotlib.patches import Circle, Rectangle, Arc
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def format_four_factors(value, metric):
-    if metric in ['TOV', 'REB%']:
-        return f"{value * 100:.1f}%"
-    else:
-        return f"{value:.3}"
+    # if metric in ['TOV', 'REB%']:
+    #     return f"{value * 100:.1f}%"
+    # else:
+    #     return f"{value:.3}"
+    return f"{value * 100:.1f}%"
+
+
+def get_game_four_factors_ranks(team, team_game_ff_df,  team_ff_df):
+    # receiving team_game_ff_df after it has been filtered
+
+    # remove team_ff_df team
+    team_ff_df = team_ff_df[(team_ff_df['team'] != team)]
+
+    #add game team ff
+    game_ff_df = pd.concat([team_ff_df,team_game_ff_df], axis = 0)
+    game_ff_df['off_efg_rank'] = game_ff_df['off_efg%'].rank(ascending=False, method='dense')
+    game_ff_df['off_tov_rank'] = game_ff_df['off_TOV'].rank(ascending=True, method='dense')
+    game_ff_df['off_reb_rank'] = game_ff_df['off_reb%'].rank(ascending=False, method='dense')
+    game_ff_df['off_ftr_rank'] = game_ff_df['off_ftr'].rank(ascending=False, method='dense')
+
+    game_ff_df['def_efg_rank'] = game_ff_df['def_efg%'].rank(ascending=True, method='dense')
+    game_ff_df['def_tov_rank'] = game_ff_df['def_TOV'].rank(ascending=False, method='dense')
+    game_ff_df['def_reb_rank'] = game_ff_df['def_reb%'].rank(ascending=False, method='dense')
+    game_ff_df['def_ftr_rank'] = game_ff_df['def_ftr'].rank(ascending=True, method='dense')
+
+
+
+    return game_ff_df
+
+
+
 
 
 def draw_court(ax=None, color='black', lw=2, outer_lines=False):
