@@ -4,9 +4,9 @@ Author: Tejas Bala
 """
 import logging
 from icecream import ic
-#ic.configureOutput(includeContext=True)
+ic.configureOutput(includeContext=True)
 
-ic.disable()
+#ic.disable()
 
 import datetime
 from dateutil import tz
@@ -19,7 +19,8 @@ import boto3
 
 import sys
 sys.path.insert(0, '../utils')
-from mysql_conn import *
+#from mysql_conn import *
+from aws_pg_conn import *
 import slack_hooks
 
 #########################################
@@ -107,7 +108,7 @@ def get_data(endpoint, params, ENDPOINT_MAP, api_key):
 
 
 def insert_data(endpoint, raw_data, params, ENDPOINT_MAP):
-    """Insert raw data into table"""
+    """Insert raw data into S3 bucket"""
 
     s3_dir = ENDPOINT_MAP[endpoint]['s3_dir']
     file_replace = ENDPOINT_MAP[endpoint]['file_replace']
@@ -124,7 +125,7 @@ def insert_data(endpoint, raw_data, params, ENDPOINT_MAP):
 def extract_and_load(endpoint, params, ENDPOINT_MAP, api_key, raw_data_key=None, reporting_keys = None, load=True):
     """Extract raw data from the specified endpoint and load into S3"""
     #endpoint_type = ENDPOINT_MAP[endpoint]['endpoint_type']
-    raw_data = ic(get_data(endpoint, params, ENDPOINT_MAP, api_key))
+    raw_data = get_data(endpoint, params, ENDPOINT_MAP, api_key)
     
     if raw_data_key is not None:
         if raw_data[raw_data_key] == [] or raw_data[raw_data_key] is None or len(raw_data[raw_data_key]) == 0:
@@ -142,10 +143,10 @@ def extract_and_load(endpoint, params, ENDPOINT_MAP, api_key, raw_data_key=None,
 
                 reporting_message += f'{appending}/'
 
-        if raw_data_key is None:
-            ic(insert_data(endpoint, raw_data, params, ENDPOINT_MAP))
-        else:
-            ic(insert_data(endpoint, raw_data[f'{raw_data_key}'], params, ENDPOINT_MAP))
+        # if raw_data_key is None:
+        #     ic(insert_data(endpoint, raw_data, params, ENDPOINT_MAP))
+        # else:
+        #     ic(insert_data(endpoint, raw_data[f'{raw_data_key}'], params, ENDPOINT_MAP))
 
         if endpoint == 'pbp':
             parse_pbp(raw_data)
@@ -200,20 +201,20 @@ def parse_pbp(raw_data):
 
     # games
     delete_statement = f"""DELETE FROM nba_parsed_game where game_id = '{game_id}'"""
-    cur.execute(delete_statement)
-    conn.commit()
+    ic(cur.execute(delete_statement))
+    ic(conn.commit())
 
     query = """INSERT INTO nba_parsed_game VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"""
     for row in game_parsed_arr:
         row_0 = [str(s).replace("'", "") for s in row]
         filled_query = (query % tuple(row_0)).replace("'None'", "NULL")
-        cur.execute(filled_query)
-    conn.commit()
+        ic(cur.execute(filled_query))
+    ic(conn.commit())
 
     # delete pre existing dup pbp
     delete_statement = f"""DELETE FROM parsed_pbp where game_id = '{game_id}'"""
-    cur.execute(delete_statement)
-    conn.commit()
+    ic(cur.execute(delete_statement))
+    ic(conn.commit())
 
     if periods is not None:
         for period in periods:
@@ -359,8 +360,8 @@ def parse_pbp(raw_data):
         for row in events_parsed_arr:
             row_0 = [str(s).replace("'", "") for s in row]
             filled_query = (query % tuple(row_0)).replace("'None'", "NULL")
-            cur.execute(filled_query)
-        conn.commit()
+            ic(cur.execute(filled_query))
+        ic(conn.commit())
 
 
 def get_changelog(slack_msg, date, ENDPOINT_MAP, api_key):

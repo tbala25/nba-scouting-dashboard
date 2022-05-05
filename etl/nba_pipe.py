@@ -36,14 +36,14 @@ if __name__ == '__main__':
         #we want to get changelog from "yesterday" if running after 4am UTC ~= 11pm CT
 
         #now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=-1)
-        now = datetime.date(2022, 1, 8)
+        now = datetime.date(2022, 5, 2)
 
-        ##update logic for bubble season
-        ##TODOs
-        if int(now.month) > 8:
-            season = int(now.year)
-        else:
-            season = int(now.year) -1
+        # ##update logic for bubble season
+        # ##TODOs
+        # if int(now.month) > 8:
+        #     season = int(now.year)
+        # else:
+        #     season = int(now.year) -1
 
         slack_msg = f""":white_check_mark: Sportradar NBA (Daily) Import Success!\n*****"""
 
