@@ -3,6 +3,8 @@
 .env
 data/*
 utils/mysql_conn.py
+utils/aws_pg_conn.py
+utils/apr_6_key_pair.pem
 
 
 # Byte-compiled / optimized / DLL files
