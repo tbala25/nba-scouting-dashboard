@@ -1,6 +1,21 @@
 from matplotlib.patches import Circle, Rectangle, Arc
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.spatial.distance import cdist
+import numpy as np
+import datetime
+
+
+def get_data(sql, conn):
+    return pd.read_sql(sql, conn)
+
+def get_season(date_string):
+    date = datetime.datetime.strptime(date_string[:10], '%Y-%M-%d')
+    if int(date.month) >= 8:
+        season = int(date.year)
+    else:
+        season = int(date.year) -1
+    return season
 
 def format_four_factors(value, metric):
     # if metric in ['TOV', 'REB%']:
@@ -33,8 +48,43 @@ def get_game_four_factors_ranks(team, team_game_ff_df,  team_ff_df):
     return game_ff_df
 
 
+def filter_team(input_df, team):
+    try:
+        filtered_df = input_df[input_df['es_team'] == team]
+        return filtered_df
+    except:
+        filtered_df = input_df[input_df['team'] == team]
+        return filtered_df
+
+def filter_game(input_df, game_id):
+    filtered_df = input_df[input_df['game_id'] == game_id]
+    return filtered_df
+
+def filter_player(input_df, player):
+    filtered_df = input_df[input_df['team'] == player]
+    return filtered_df
 
 
+def calculate_shot_variability(shot_chart_df):
+
+    made = shot_chart_df[shot_chart_df['es_made'] == 'True']
+
+    shot_locs = shot_chart_df[['coord_x', 'coord_y']].values.tolist()
+    made_shot_locs = made[['coord_x', 'coord_y']].values.tolist()
+
+    distances = cdist(shot_locs, shot_locs)
+    made_distances = cdist(made_shot_locs, made_shot_locs)
+
+    shot_avg_dist = []
+    made_shot_avg_dist = []
+
+    for shot_dist_to_all in distances:
+        shot_avg_dist.append(np.mean(shot_dist_to_all))
+
+    for shot_dist_to_all in made_distances:
+        made_shot_avg_dist.append(np.mean(shot_dist_to_all))
+
+    return np.mean(made_shot_avg_dist).round(1), np.mean(shot_avg_dist).round(1)
 
 def draw_court(ax=None, color='black', lw=2, outer_lines=False):
     # If an axes object isn't provided to plot onto, just get current one

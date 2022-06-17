@@ -6,7 +6,7 @@ import logging
 from icecream import ic
 ic.configureOutput(includeContext=True)
 
-#ic.disable()
+ic.disable()
 
 import datetime
 from dateutil import tz
@@ -17,10 +17,13 @@ import requests
 import time
 import boto3
 
+from util_helpers import *
+
 import sys
 sys.path.insert(0, '../utils')
-#from mysql_conn import *
-from aws_pg_conn import *
+# from mysql_conn import *
+#from aws_pg_conn import *
+from aws_mysql_conn import *
 import slack_hooks
 
 #########################################
@@ -143,10 +146,10 @@ def extract_and_load(endpoint, params, ENDPOINT_MAP, api_key, raw_data_key=None,
 
                 reporting_message += f'{appending}/'
 
-        # if raw_data_key is None:
-        #     ic(insert_data(endpoint, raw_data, params, ENDPOINT_MAP))
-        # else:
-        #     ic(insert_data(endpoint, raw_data[f'{raw_data_key}'], params, ENDPOINT_MAP))
+        if raw_data_key is None:
+            ic(insert_data(endpoint, raw_data, params, ENDPOINT_MAP))
+        else:
+            ic(insert_data(endpoint, raw_data[f'{raw_data_key}'], params, ENDPOINT_MAP))
 
         if endpoint == 'pbp':
             parse_pbp(raw_data)
@@ -165,6 +168,7 @@ def parse_pbp(raw_data):
     game_id = raw_data.get('id')
     game_attendance = raw_data.get('attendance')
     game_scheduled = raw_data.get('scheduled')
+    season = get_season(game_scheduled)
     home_name = raw_data.get('home').get('name')
     home_alias = raw_data.get('home').get('alias')
     home_id = raw_data.get('home').get('id')
@@ -187,6 +191,7 @@ def parse_pbp(raw_data):
             game_id,
             game_attendance,
             game_scheduled_est,
+            season,
             home_name,
             home_alias,
             home_id,
@@ -204,7 +209,7 @@ def parse_pbp(raw_data):
     ic(cur.execute(delete_statement))
     ic(conn.commit())
 
-    query = """INSERT INTO nba_parsed_game VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"""
+    query = """INSERT INTO nba_parsed_game VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"""
     for row in game_parsed_arr:
         row_0 = [str(s).replace("'", "") for s in row]
         filled_query = (query % tuple(row_0)).replace("'None'", "NULL")
@@ -257,10 +262,10 @@ def parse_pbp(raw_data):
 
                     event_statistics = event.get('statistics')
 
-                    if event_statistics is  None:
+                    if event_statistics is None:
                         es_player = None 
                         es_team = None 
-                        non_es_team  = None
+                        non_es_team = None
                         es_type = None 
                         es_made = None
                         es_shot_type = None
@@ -273,6 +278,7 @@ def parse_pbp(raw_data):
                         events_parsed_arr.append(
                         [
                             game_id,
+                            season,
                             home_alias,
                             home_name,
                             away_alias,
@@ -326,6 +332,7 @@ def parse_pbp(raw_data):
                             events_parsed_arr.append(
                                 [
                                     game_id,
+                                    season,
                                     home_alias,
                                     home_name,
                                     away_alias,
@@ -356,12 +363,12 @@ def parse_pbp(raw_data):
                                 ]
                             )
 
-        query = """INSERT INTO parsed_pbp VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"""
+        query = """INSERT INTO parsed_pbp VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')"""
         for row in events_parsed_arr:
             row_0 = [str(s).replace("'", "") for s in row]
             filled_query = (query % tuple(row_0)).replace("'None'", "NULL")
-            ic(cur.execute(filled_query))
-        ic(conn.commit())
+            cur.execute(filled_query)
+        conn.commit()
 
 
 def get_changelog(slack_msg, date, ENDPOINT_MAP, api_key):

@@ -46,48 +46,17 @@ team_game_ff_df = pd.read_sql(sql, conn)
 ## TODO add season drop down
 dd_col1, dd_col2, dd_col3= st.columns(3)
 
-TEAM = 'NBA'
-GAME = None
-PLAYER = None
 #########################################################
 ##filters
 
 filtered_df = shot_df.copy()
 filtered_boxscore_df = boxscore_df.copy()
 
-filtered_df['game_id'] = filtered_df['game_id'].astype(str)
-game_df['game_id'] = game_df['game_id'].astype(str)
-filtered_game_df = game_df.merge(filtered_df, how='inner', on='game_id')
+team = dd_col1.selectbox(
+    'Team',
+     np.insert(sorted(filtered_df['es_team'].unique()), 0, 'NBA'))
 
-team_list = np.insert(sorted(filtered_df['team'].unique()), 0, 'NBA')
-team = dd_col1.selectbox('Team',team_list)
-
-
-if team != TEAM:
-    filtered_df = filter_team(filtered_df, team)
-    filtered_boxscore_df = filter_team(filtered_boxscore_df, team)
-    filtered_game_df = filter_team(filtered_game_df, team)
-    TEAM = team
-
-opponents = [" @ " + home_team if away_team==team else " vs " + away_team if home_team==team else "none" for home_team, away_team in zip(filtered_game_df['home_name'], filtered_game_df['away_name'])]
-filtered_game_df['opponents'] = opponents
-filtered_game_df['game_name'] = filtered_game_df['game_name'] + filtered_game_df['opponents']
-
-game_list = np.insert(sorted(filtered_game_df['game_name'].unique()), 0, 'None')
-if TEAM == 'NBA':
-    game_list = ['None']
-game = dd_col2.selectbox('Game', game_list)
-
-if game!= GAME:
-    #game_id =
-    # filtered_df = filter_game(filtered_df, game)
-    # filtered_boxscore_df = filter_game(filtered_boxscore_df, game)
-    # filtered_game_df = filter_game(filtered_game_df, game)
-    pass
-
-player_list = np.insert(sorted(filtered_df['player'].unique()),0, 'None')
-player = dd_col3.selectbox('Player',player_list)
-
+#'You selected:', team
 
 if team == 'NBA':
     try:
@@ -134,21 +103,21 @@ else:
 
 
 
-    #filtered_df = filtered_df[filtered_df['es_team']==team]
+    filtered_df = filtered_df[filtered_df['es_team']==team]
     filtered_boxscore_df = filtered_boxscore_df[filtered_boxscore_df['team']==team]
     # filtered_pbp_df = filtered_pbp_df[filtered_pbp_df['team']==team]
 
-    # filtered_df['game_id'] = filtered_df['game_id'].astype(str)
-    # game_df['game_id'] = game_df['game_id'].astype(str)
-    # filtered_game_df = game_df.merge(filtered_df, how='inner', on='game_id')
-    # opponents = [" @ " + home_team if away_team==team else " vs " + away_team if home_team==team else "none" for home_team, away_team in zip(filtered_game_df['home_name'], filtered_game_df['away_name'])]
-    # filtered_game_df['opponents'] = opponents
-    # filtered_game_df['game_name'] = filtered_game_df['game_name'] + filtered_game_df['opponents']
+    filtered_df['game_id'] = filtered_df['game_id'].astype(str)
+    game_df['game_id'] = game_df['game_id'].astype(str)
+    filtered_game_df = game_df.merge(filtered_df, how='inner', on='game_id')
+    opponents = [" @ " + home_team if away_team==team else " vs " + away_team if home_team==team else "none" for home_team, away_team in zip(filtered_game_df['home_name'], filtered_game_df['away_name'])]
+    filtered_game_df['opponents'] = opponents
+    filtered_game_df['game_name'] = filtered_game_df['game_name'] + filtered_game_df['opponents']
     #st.dataframe(filtered_game_df)
 
-    # game = dd_col2.selectbox(
-    #     'Game',
-    #      np.insert(sorted(filtered_game_df['game_name'].unique()), 0, 'None'))
+    game = dd_col2.selectbox(
+        'Game',
+         np.insert(sorted(filtered_game_df['game_name'].unique()), 0, 'None'))
 
     #'Game selected:', game
     if game !='None':
@@ -228,15 +197,15 @@ else:
         filtered_pbp_df = pbp_df.copy()
 
     # pp_col1, pp_col2 = st.columns([3,1])
-    # player = dd_col3.selectbox(
-    #     'Player',
-    #      np.insert(filtered_df['es_player'].unique(),0, 'None'))
+    player = dd_col3.selectbox(
+        'Player',
+         np.insert(filtered_df['es_player'].unique(),0, 'None'))
     # 'You selected:', player
 
     if player !='None':
-        filtered_df = filtered_df[filtered_df['player'] == player]
+        filtered_df = filtered_df[filtered_df['es_player']==player]
         filtered_boxscore_df = filtered_boxscore_df[filtered_boxscore_df['player'] == player]
-        filtered_pbp_df = filtered_pbp_df[filtered_pbp_df['es_player'] == player]
+        filtered_pbp_df = filtered_pbp_df[filtered_pbp_df['es_player']==player]
 
 
         try:
@@ -314,25 +283,23 @@ left_column, right_column = st.columns(2)
 st.markdown('#')
 st.pyplot(joint_shot_chart)
 
-#DEBUGGING BOXSCOER + PBP
+try:
+    boxscore_pressed = st.button('Boxscore')
+    pbp_pressed = st.button("Play by Play")
 
-# try:
-#     boxscore_pressed = st.button('Boxscore')
-#     pbp_pressed = st.button("Play by Play")
-#
-#     if boxscore_pressed:
-#         right_column.dataframe(filtered_boxscore_df[
-#                                    ['player', 'FGM', 'FGA', '3PM', '3PA', 'FTM', 'FTA', 'ORB', 'DRB', 'REB', 'AST',
-#                                     'STL', 'BLK', 'TOV', 'PF', 'PTS']]
-#                                .dropna(subset=['player'])
-#                                .style.format(precision=0),
-#                                height=1000)
-#     if pbp_pressed:
-#         right_column.dataframe(filtered_pbp_df[['period_number', 'event_clock', 'es_team', 'es_player', 'es_type',
-#                                                 'event_action_area', 'event_description']]
-#                                .style.format(precision=0),
-#                                height=1000)
-# except:
-#     pass
+    if boxscore_pressed:
+        right_column.dataframe(filtered_boxscore_df[
+                                   ['player', 'FGM', 'FGA', '3PM', '3PA', 'FTM', 'FTA', 'ORB', 'DRB', 'REB', 'AST',
+                                    'STL', 'BLK', 'TOV', 'PF', 'PTS']]
+                               .dropna(subset=['player'])
+                               .style.format(precision=0),
+                               height=1000)
+    if pbp_pressed:
+        right_column.dataframe(filtered_pbp_df[['period_number', 'event_clock', 'es_team', 'es_player', 'es_type',
+                                                'event_action_area', 'event_description']]
+                               .style.format(precision=0),
+                               height=1000)
+except:
+    pass
 
 
