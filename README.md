@@ -6,6 +6,8 @@ Provides overview of in-game stats from parsed play-by-play stats from SportRada
 
 :hammer_and_wrench: Data pipeline built in Python to access SportRadar API, parse play-by-play data and load into database on AWS
 
+:1234: Shotchart, Boxscores, Four Factors etc. parsed and/or calculated from play-by-play data
+
 :printer: Data pipeline runs are monitored via Slack reporting
 
 --------------------
