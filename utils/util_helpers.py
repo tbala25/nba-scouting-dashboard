@@ -61,8 +61,12 @@ def filter_game(input_df, game_id):
     return filtered_df
 
 def filter_player(input_df, player):
-    filtered_df = input_df[input_df['team'] == player]
-    return filtered_df
+    try:
+        filtered_df = input_df[input_df['player'] == player]
+        return filtered_df
+    except:
+        filtered_df = input_df[input_df['es_player'] == player]
+        return filtered_df
 
 
 def calculate_shot_variability(shot_chart_df):
@@ -83,6 +87,11 @@ def calculate_shot_variability(shot_chart_df):
 
     for shot_dist_to_all in made_distances:
         made_shot_avg_dist.append(np.mean(shot_dist_to_all))
+
+    # print(f"# Made Shots: {len(made_shot_locs)}")
+    # print(f"made: {made_distances[0]}")
+    # print(f"made_shot_avg_dist: {made_shot_avg_dist}")
+    # print(f"made avgt: {np.mean(made_shot_avg_dist).round(1)}")
 
     return np.mean(made_shot_avg_dist).round(1), np.mean(shot_avg_dist).round(1)
 

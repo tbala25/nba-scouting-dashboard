@@ -1,11 +1,6 @@
 import streamlit as st
 st.set_page_config(layout="wide")
-import numpy as np
-import pandas as pd
 
-# import requests
-import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 # import mysql.connector
 from utils.mysql_conn import *
@@ -20,19 +15,12 @@ shot_df['coord_x'] = shot_df['event_coord_y'].astype(int)
 shot_df['coord_y'] = [-(x - 1100) if x > 550 else x for x in shot_df['event_coord_x'].astype(int)]
 shot_df['coord_x'] = [600 - x if period >=3 else x
                       for x,home,period in zip(shot_df['coord_x'], shot_df['es_team_home'], shot_df['period_number'])]
-# shot_df['coord_x'] = [600 - x if x <= 300 and y <= 550 else x
-#                      for x,y in zip(shot_df['event_coord_y'].astype(int),shot_df['event_coord_x'].astype(int))]
-# shot_df['new_event_action_area'] = [x.replace('right', 'left') if 'right' in x and q >=3 and t == 0 else x.replace('left', 'right') if 'left' in x and q >= 3 and t == 0 else x for x,q,t in zip(shot_df['event_action_area'], shot_df['period_number'], shot_df['es_team_home'])]
-# shot_df['new_event_action_area'] = [x.replace('right', 'left') if 'right' in x and q <=2 and t == 1 else x.replace('left', 'right') if 'left' in x and q <= 2 and t == 1 else x for x,q,t in zip(shot_df['event_action_area'], shot_df['period_number'], shot_df['es_team_home'])]
 
 sql = "SELECT * FROM sr_nba.nba_parsed_game"
 game_df = pd.read_sql(sql, conn)
 game_df['game_name'] = game_df['game_scheduled'].apply(lambda x: x[:10])
 sql = "SELECT * FROM sr_nba.boxscore"
 boxscore_df = pd.read_sql(sql, conn)
-
-# sql = "SELECT * FROM sr_nba.nba_parsed_game"
-# pbp_df = pd.read_sql(sql, conn)
 
 
 sql = "SELECT * FROM sr_nba.team_four_factors_rank"
@@ -47,8 +35,9 @@ team_game_ff_df = pd.read_sql(sql, conn)
 dd_col1, dd_col2, dd_col3= st.columns(3)
 
 TEAM = 'NBA'
-GAME = None
-PLAYER = None
+GAME = 'None'
+PLAYER = 'None'
+SEASON = 'All'
 #########################################################
 ##filters
 
@@ -60,13 +49,14 @@ game_df['game_id'] = game_df['game_id'].astype(str)
 filtered_game_df = game_df.merge(filtered_df, how='inner', on='game_id')
 
 team_list = np.insert(sorted(filtered_df['team'].unique()), 0, 'NBA')
-team = dd_col1.selectbox('Team',team_list)
+team = dd_col1.selectbox('Team', team_list)
 
 
 if team != TEAM:
     filtered_df = filter_team(filtered_df, team)
     filtered_boxscore_df = filter_team(filtered_boxscore_df, team)
     filtered_game_df = filter_team(filtered_game_df, team)
+    team_game_ff_df = filter_team(team_game_ff_df, team)
     TEAM = team
 
 opponents = [" @ " + home_team if away_team==team else " vs " + away_team if home_team==team else "none" for home_team, away_team in zip(filtered_game_df['home_name'], filtered_game_df['away_name'])]
@@ -78,16 +68,27 @@ if TEAM == 'NBA':
     game_list = ['None']
 game = dd_col2.selectbox('Game', game_list)
 
-if game!= GAME:
-    #game_id =
-    # filtered_df = filter_game(filtered_df, game)
-    # filtered_boxscore_df = filter_game(filtered_boxscore_df, game)
-    # filtered_game_df = filter_game(filtered_game_df, game)
-    pass
+if game != GAME:
+    game_id = filtered_game_df[filtered_game_df['game_name'] == game]['game_id'].unique()[0]
+    filtered_df = filter_game(filtered_df, game_id)
+    filtered_boxscore_df = filter_game(filtered_boxscore_df, game_id)
+    filtered_game_df = filter_game(filtered_game_df, game_id)
+    team_game_ff_df = filter_game(team_game_ff_df, game_id)
+
+    sql = f"SELECT * FROM sr_nba.parsed_pbp where es_team='{team}' and game_id='{game_id}'"
+    filtered_pbp_df = pd.read_sql(sql, conn)
+    GAME = game
 
 player_list = np.insert(sorted(filtered_df['player'].unique()),0, 'None')
 player = dd_col3.selectbox('Player',player_list)
 
+if player != PLAYER:
+    filtered_df = filter_player(filtered_df, player)
+    filtered_boxscore_df = filter_player(filtered_boxscore_df, player)
+    try:
+        filtered_pbp_df = filter_player(filtered_pbp_df, player)
+    except:
+        pass
 
 if team == 'NBA':
     try:
@@ -100,7 +101,6 @@ if team == 'NBA':
 else:
     try:
         st.image('./images/team_logos/' + team + '.png', width=200)
-
     except:
         st.title(team + ' Scouting Dashboard')
 
@@ -133,31 +133,10 @@ else:
         pass
 
 
-
-    #filtered_df = filtered_df[filtered_df['es_team']==team]
     filtered_boxscore_df = filtered_boxscore_df[filtered_boxscore_df['team']==team]
-    # filtered_pbp_df = filtered_pbp_df[filtered_pbp_df['team']==team]
 
-    # filtered_df['game_id'] = filtered_df['game_id'].astype(str)
-    # game_df['game_id'] = game_df['game_id'].astype(str)
-    # filtered_game_df = game_df.merge(filtered_df, how='inner', on='game_id')
-    # opponents = [" @ " + home_team if away_team==team else " vs " + away_team if home_team==team else "none" for home_team, away_team in zip(filtered_game_df['home_name'], filtered_game_df['away_name'])]
-    # filtered_game_df['opponents'] = opponents
-    # filtered_game_df['game_name'] = filtered_game_df['game_name'] + filtered_game_df['opponents']
-    #st.dataframe(filtered_game_df)
-
-    # game = dd_col2.selectbox(
-    #     'Game',
-    #      np.insert(sorted(filtered_game_df['game_name'].unique()), 0, 'None'))
-
-    #'Game selected:', game
     if game !='None':
 
-        game_id = filtered_game_df[filtered_game_df['game_name'] == game]['game_id'].unique()[0]
-        # expander = st.sidebar.expander("Show game_id")
-        # expander.write(game_id)
-
-        team_game_ff_df = team_game_ff_df[(team_game_ff_df['team'] == team) & (team_game_ff_df['game_id'] == game_id)]
         st.header('Four Factors ' + game)
         col1, col2, col3, col4 = st.columns(4)
         if rank == 'Percentages (Raw)':
@@ -179,8 +158,6 @@ else:
                         delta=format_four_factors(team_game_ff_df['def_ftr'].values[0] - team_ff_df['def_ftr'].values[0],'ftr'), delta_color="inverse")
         elif rank == 'Rank (vs. League)':
             game_ranks = get_game_four_factors_ranks(team, team_game_ff_df, team_ff_df_orig)
-            # st.dataframe(game_ranks)
-            # st.dataframe(team_ff_df)
             game_ranks = game_ranks[game_ranks['team'] == team]
             col1.metric(label="OFF eFG% Rank", value=int(game_ranks['off_efg_rank'].values[0]),
                         delta= int(team_ff_df['off_efg_rank'].values[0] - game_ranks['off_efg_rank'].values[0] ))
@@ -206,38 +183,7 @@ else:
             col4.metric(label="DEF FTR Rank", value=int(game_ranks['def_ftr_rank'].values[0]),
                         delta=int(team_ff_df['def_ftr_rank'].values[0] - game_ranks['def_ftr_rank'].values[0]))
 
-            # col1.metric(label="DEF eFG%", value=format_four_factors(team_game_ff_df['def_efg%'].values[0], 'efg'),
-            #             delta=format_four_factors(
-            #                 team_game_ff_df['def_efg%'].values[0] - team_ff_df['def_efg%'].values[0], 'efg'),
-            #             delta_color="inverse")
-            # col2.metric(label="DEF TOV", value=format_four_factors(team_game_ff_df['def_TOV'].values[0], 'TOV'),
-            #             delta=format_four_factors(
-            #                 team_game_ff_df['def_TOV'].values[0] - team_ff_df['def_TOV'].values[0], 'TOV'))
-            # col3.metric(label="DEF REB%", value=format_four_factors(team_game_ff_df['def_reb%'].values[0], 'REB%'),
-            #             delta=format_four_factors(
-            #                 team_game_ff_df['def_reb%'].values[0] - team_ff_df['def_reb%'].values[0], 'REB%'))
-            # col4.metric(label="DEF FTR", value=format_four_factors(team_game_ff_df['def_ftr'].values[0], 'ftr'),
-            #             delta=format_four_factors(
-            #                 team_game_ff_df['def_ftr'].values[0] - team_ff_df['def_ftr'].values[0], 'ftr'),
-            #             delta_color="inverse")
-
-        filtered_df = filtered_df[filtered_df['game_id']==game_id]
-        filtered_boxscore_df = filtered_boxscore_df[filtered_boxscore_df['game_id'] == game_id]
-        sql = f"SELECT * FROM sr_nba.parsed_pbp where es_team='{team}' and game_id='{game_id}'"
-        pbp_df = pd.read_sql(sql, conn)
-        filtered_pbp_df = pbp_df.copy()
-
-    # pp_col1, pp_col2 = st.columns([3,1])
-    # player = dd_col3.selectbox(
-    #     'Player',
-    #      np.insert(filtered_df['es_player'].unique(),0, 'None'))
-    # 'You selected:', player
-
     if player !='None':
-        filtered_df = filtered_df[filtered_df['player'] == player]
-        filtered_boxscore_df = filtered_boxscore_df[filtered_boxscore_df['player'] == player]
-        filtered_pbp_df = filtered_pbp_df[filtered_pbp_df['es_player'] == player]
-
 
         try:
             st.image('./images/players/' + player.replace(' ','').lower() + '.jpeg', width=150)
@@ -249,14 +195,12 @@ else:
         box_1, box_2, box_3, box_4, box_5, box_6 = st.columns(6)
         b_1, b_2, b_3, b_4, b_5, b_6, b_7, b_8, b_9, b_10, b_11, b_12 = st.columns(12)
 
-
         box_1.metric(label="PTS", value=int(filtered_boxscore_df['PTS'].values[0]))
         box_2.metric(label="AST", value=int(filtered_boxscore_df['AST'].values[0]))
         box_3.metric(label="REB", value=int(filtered_boxscore_df['REB'].values[0]))
         box_4.metric(label="BLK", value=int(filtered_boxscore_df['BLK'].values[0]))
         box_5.metric(label="STL", value=int(filtered_boxscore_df['STL'].values[0]))
         box_6.metric(label="TOV", value=int(filtered_boxscore_df['TOV'].values[0]))
-
 
         box_1.metric(label="FGM/FGA",
                      value=str(int(filtered_boxscore_df['FGM'].values[0]))+'/'+str(int(filtered_boxscore_df['FGA'].values[0])))
@@ -273,17 +217,28 @@ else:
         box_6.metric(label="PF",
                    value=int(filtered_boxscore_df['PF'].values[0]))
 
+        ##SHOT VARIABILITY
+        shot_vars = calculate_shot_variability(filtered_df)
+        st.info("SHOT VAR is the calculated distance between shots." \
+                + " Capped representing only made shots and uncapped representing all shots attempted." \
+                + " Hypothesis is that a large deficit between Capped/Uncapped call for further exploration")
+        box_1.metric("SHOT VAR (Capped)", shot_vars[0])
+        box_2.metric("SHOT VAR (Uncapped)", shot_vars[1])
 
         #####
         filtered_df = filtered_df.reset_index(drop=True)
-        st.dataframe(filtered_df.style.format(precision=0),height=1000)
+        toggle_shot_df = st.radio("Toggle Shot Chart Data Table & Row Selector", ["Show", "Hide"])
+        if toggle_shot_df == "Show":
+            st.dataframe(filtered_df.style.format(precision=0), height=1000)
 
-        shot = st.selectbox(
-            'Play ID', filtered_df.index.values)
+            shot_list = list(filtered_df.index.values)
+            shot_list.insert(0, 'None')
 
-        if shot != "None":
-            filtered_df = filtered_df.loc[shot,:]
+            shot = st.selectbox(
+                'Play ID', shot_list)
 
+            if shot != "None":
+                filtered_df = filtered_df.loc[shot, :]
 
 ##############
 
