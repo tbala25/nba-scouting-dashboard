@@ -10,6 +10,8 @@ Provides overview of in-game stats from parsed play-by-play stats from SportRada
 
 :printer: Data pipeline runs are monitored via Slack reporting
 
+:zap: Live dashboard hosted on AWS in progress
+
 --------------------
 
 <img width="1901" alt="image" src="https://user-images.githubusercontent.com/12696313/175170650-717af24a-3853-4999-be42-74a8ffc4eea0.png">
