@@ -3,7 +3,8 @@ st.set_page_config(layout="wide")
 
 import seaborn as sns
 # import mysql.connector
-from utils.mysql_conn import *
+# from utils.mysql_conn import *
+from utils.aws_mysql_conn import *
 from utils.util_helpers import *
 
 #########################################################
@@ -249,7 +250,7 @@ cmap=plt.cm.gist_heat_r
 joint_shot_chart = sns.jointplot(filtered_df['coord_x'].astype(int), filtered_df['coord_y'].astype(int),
                                  kind='hex', joint_kws= joint_kws, space=0, color=cmap(.2), cmap=cmap)
 # joint_shot_chart = plt.hexbin(filtered_df['coord_x'].astype(int), filtered_df['coord_y'].astype(int), gridsize = 50, cmap ='Greens')
-joint_shot_chart.fig.set_size_inches(12,11)
+joint_shot_chart.fig.set_size_inches(8,6)
 ax = joint_shot_chart.ax_joint
 draw_court(ax, outer_lines=True)
 
