@@ -1,3 +1,7 @@
+####################################################
+##IMPORTS
+#################################################
+
 import streamlit as st
 st.set_page_config(layout="wide")
 
@@ -9,6 +13,8 @@ from utils.util_helpers import *
 
 #########################################################
 ##GET DATA
+#######################################################
+
 sql = "SELECT * FROM sr_nba.shot_chart"
 shot_df = pd.read_sql(sql, conn)
 
